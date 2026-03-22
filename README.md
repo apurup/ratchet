@@ -1,3 +1,5 @@
+[![Deploy to GitHub Pages](https://github.com/apurup/ratchet/actions/workflows/deploy.yml/badge.svg)](https://apurup.github.io/ratchet/)
+
 # Ratchet
 
 > **Deterministic self-improving AI agent framework. Proves strong infrastructure beats bigger models.**
