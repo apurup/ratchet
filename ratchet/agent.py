@@ -1,302 +1,181 @@
 """
-Agent - Main agent loop with verify-fix cycles
+Main Agent - Self-improving agent loop with deterministic execution
 """
 
-import time
-from typing import Optional, List, Dict, Any
+import uuid
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
+from enum import Enum
 
+from ratchet.models import ModelClient, get_client
 from ratchet.skill import Skill, Step, StepType
 from ratchet.generator import Generator
-from ratchet.verifier import Verifier, VerificationResult
-from ratchet.reflector import Reflector
-from ratchet.curator import Curator
+from ratchet.verifier import Verifier, ExecutionResult, TestCase, VerificationStatus
+from ratchet.reflector import Reflector, FailureAnalysis
+from ratchet.curator import Curator, RepairLesson
+
+
+class AgentMode(str, Enum):
+    BASIC = "basic"
+    SKILL = "skill"
+    SELF_IMPROVE = "self_improve"
+
+
+@dataclass
+class ExecutionTrace:
+    id: str
+    task: str
+    mode: str
+    skill_name: Optional[str]
+    started_at: str
+    completed_at: Optional[str] = None
+    duration_ms: float = 0
+    total_cost: float = 0
+    steps: List[Dict[str, Any]] = field(default_factory=list)
+    success: bool = False
+    output: Optional[str] = None
+    error: Optional[str] = None
+    failure_analysis: Optional[Dict] = None
+    lesson_id: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return {k: v if not hasattr(v, 'to_dict') else v.to_dict() for k, v in self.__dict__.items()}
 
 
 @dataclass
 class AgentConfig:
-    max_iterations: int = 10
-    max_cost_per_step: float = 5.0
-    improvement_threshold: float = 0.8
-    verbose: bool = True
+    provider: str = "minimax"
+    model: str = "MiniMax-M2.7"
+    api_key: Optional[str] = None
+    api_base: Optional[str] = None
+    mode: AgentMode = AgentMode.SELF_IMPROVE
+    max_iterations: int = 3
+    temperature: float = 0.3
+    verify_all: bool = True
+    sandbox_dir: Optional[str] = None
+    learn_from_failures: bool = True
+    curator_path: str = "./data/curator.json"
 
 
-@dataclass
-class StepResult:
-    step_id: str
-    step_type: StepType
-    passed: bool
-    output: str = ""
-    error: Optional[str] = None
-    cost: float = 0.0
-    latency_ms: float = 0.0
-    verification: Optional[VerificationResult] = None
-
-
-@dataclass
-class ExecutionResult:
-    skill_name: str
-    passed: bool
-    steps: List[StepResult] = field(default_factory=list)
-    total_cost: float = 0.0
-    total_time_ms: float = 0.0
-    final_output: str = ""
-    error: Optional[str] = None
-
-
-class Agent:
-    """Main agent that executes skills with verification and self-improvement."""
-
-    def __init__(
-        self,
-        generator: Optional[Generator] = None,
-        verifier: Optional[Verifier] = None,
-        reflector: Optional[Reflector] = None,
-        curator: Optional[Curator] = None,
-        config: Optional[AgentConfig] = None,
-    ):
-        self.generator = generator or Generator()
-        self.verifier = verifier or Verifier()
-        self.reflector = reflector or Reflector()
-        self.curator = curator or Curator()
+class RatchetAgent:
+    """
+    Self-improving AI agent with deterministic skill execution.
+    """
+    def __init__(self, config: Optional[AgentConfig] = None):
         self.config = config or AgentConfig()
+        self.model_client = get_client(
+            provider=self.config.provider,
+            api_key=self.config.api_key,
+            base_url=self.config.api_base,
+        )
+        self.generator = Generator(
+            model_client=self.model_client,
+            model_name=self.config.model,
+            default_temperature=self.config.temperature,
+        )
+        self.verifier = Verifier(sandbox_dir=self.config.sandbox_dir)
+        self.reflector = Reflector(model=self.generator)
+        self.curator = Curator(storage_path=self.config.curator_path)
+        self.current_trace: Optional[ExecutionTrace] = None
+        self.execution_history: List[ExecutionTrace] = []
 
-    def run(self, skill: Skill, context: Optional[Dict[str, Any]] = None) -> ExecutionResult:
-        """Execute a skill end-to-end with verification."""
-        context = context or {}
-        result = ExecutionResult(skill_name=skill.name)
-        start_time = time.time()
+    async def execute_task(self, task: str, skill: Optional[Skill] = None, mode: Optional[AgentMode] = None) -> ExecutionTrace:
+        from datetime import datetime
+        import time
+        mode = mode or self.config.mode
+        trace = ExecutionTrace(
+            id=str(uuid.uuid4()), task=task, mode=mode.value,
+            skill_name=skill.name if skill else None,
+            started_at=datetime.utcnow().isoformat(),
+        )
+        self.current_trace = trace
+        start = time.time()
+        try:
+            if mode == AgentMode.BASIC:
+                output = await self._execute_basic(task)
+                trace.success = True
+                trace.output = output
+            elif mode == AgentMode.SKILL:
+                if not skill: raise ValueError("Skill required for SKILL mode")
+                result = await self._execute_skill(task, skill)
+                trace.steps = result["steps"]
+                trace.success = result["success"]
+                trace.output = result.get("output")
+                trace.error = result.get("error")
+            elif mode == AgentMode.SELF_IMPROVE:
+                result = await self._execute_self_improve(task, skill)
+                trace.steps = result["steps"]
+                trace.success = result["success"]
+                trace.output = result.get("output")
+                trace.error = result.get("error")
+                trace.failure_analysis = result.get("failure_analysis")
+                trace.lesson_id = result.get("lesson_id")
+        except Exception as e:
+            trace.success = False
+            trace.error = str(e)
+        trace.duration_ms = (time.time() - start) * 1000
+        trace.total_cost = self.generator.total_cost
+        trace.completed_at = datetime.utcnow().isoformat()
+        self.execution_history.append(trace)
+        return trace
 
-        if self.config.verbose:
-            print(f"[Agent] Starting skill: {skill.name}")
+    async def _execute_basic(self, task: str) -> str:
+        response = self.generator.generate(prompt=task)
+        return response.content
 
+    async def _execute_skill(self, task: str, skill: Skill) -> Dict[str, Any]:
+        steps_log = []
+        context = {"task": task}
+        current_step_id = skill.steps[0].id if skill.steps else None
+        while current_step_id:
+            step = skill.get_step(current_step_id)
+            if not step: break
+            step_log = {"step_id": step.id, "type": step.type.value}
+            steps_log.append(step_log)
+            if step.type == StepType.PROMPT:
+                prompt = step.prompt.format(**context) if step.prompt else f"Complete: {task}"
+                response = self.generator.generate(prompt=prompt)
+                context["last_output"] = response.content
+                step_log["output"] = response.content
+                step_log["cost"] = response.cost
+            current_step_id = skill.get_next_steps(current_step_id)[0] if skill.get_next_steps(current_step_id) else None
+        return {"steps": steps_log, "success": True, "output": context.get("last_output")}
+
+    async def _execute_self_improve(self, task: str, skill: Optional[Skill] = None) -> Dict[str, Any]:
+        steps_log = []
         for iteration in range(self.config.max_iterations):
-            if self.config.verbose:
-                print(f"[Agent] Iteration {iteration + 1}/{self.config.max_iterations}")
-
-            step_outputs: Dict[str, str] = {}
-            all_passed = True
-
-            for step in skill.steps:
-                step_result = self._execute_step(step, context, step_outputs)
-                result.steps.append(step_result)
-                step_outputs[step.id] = step_result.output
-                result.total_cost += step_result.cost
-                result.total_time_ms += step_result.latency_ms
-
-                if not step_result.passed:
-                    all_passed = False
-                    if self.config.verbose:
-                        print(f"[Agent] Step {step.id} failed: {step_result.error}")
-
-                    # Attempt self-improvement if enabled
-                    if skill.self_improve and iteration < self.config.max_iterations - 1:
-                        if self.config.verbose:
-                            print(f"[Agent] Attempting fix for step {step.id}...")
-                        fix_result = self._attempt_fix(skill, step, step_result, context)
-                        if fix_result:
-                            # Retry this step
-                            retry_result = self._execute_step(
-                                step, context, step_outputs
-                            )
-                            result.steps.append(retry_result)
-                            step_outputs[step.id] = retry_result.output
-                            if not retry_result.passed:
-                                break
-                        else:
-                            break
-                    else:
-                        break
-
-            if all_passed:
-                result.passed = True
-                result.final_output = step_outputs.get(skill.steps[-1].id, "")
-                if self.config.verbose:
-                    print(f"[Agent] Skill '{skill.name}' completed successfully")
-                break
-
-        if not result.passed and not result.error:
-            result.error = "Max iterations reached without passing"
-            if self.config.verbose:
-                print(f"[Agent] {result.error}")
-
-        result.total_time_ms = (time.time() - start_time) * 1000
-
-        # Update curator stats
-        self.curator.update_skill_stats(skill.name, result.passed, result.total_cost)
-
-        return result
-
-    def _execute_step(
-        self,
-        step: Step,
-        context: Dict[str, Any],
-        prior_outputs: Dict[str, str],
-    ) -> StepResult:
-        """Execute a single step."""
-        result = StepResult(step_id=step.id, step_type=step.type, passed=False)
-
-        if step.type == StepType.PROMPT:
-            # Build prompt with context
-            prompt = self._build_step_prompt(step, context, prior_outputs)
-            resp = self.generator.generate(prompt, model=step.model)
-
-            result.output = resp.content
-            result.cost = resp.cost
-            result.latency_ms = resp.latency_ms
-            result.error = resp.error
-
-            if resp.error:
-                return result
-
-            # Verify if rule exists
-            if step.verification:
-                result.verification = self.verifier.verify(
-                    step.verification, resp.content, context
-                )
-                result.passed = result.verification.passed
-                if not result.passed:
-                    result.error = result.verification.message
+            iteration_log = {"iteration": iteration}
+            steps_log.append(iteration_log)
+            if skill:
+                result = await self._execute_skill(task, skill)
             else:
-                result.passed = True
-
-        elif step.type == StepType.EXEC:
-            result.verification = self.verifier.verify(
-                step.verification or self._default_exec_rule(step),
-                step.command or "",
+                output = await self._execute_basic(task)
+                result = {"steps": [{"output": output}], "success": True, "output": output}
+            if result["success"]:
+                return {"steps": steps_log, "success": True, "output": result.get("output"), "iterations": iteration + 1}
+            error = result.get("error", "Unknown")
+            code = result.get("steps", [{}])[-1].get("output", "")
+            analysis = self.reflector.analyze_failure(code=code, error=error, verification_output=error)
+            iteration_log["failure_analysis"] = analysis.to_dict()
+            lesson = RepairLesson(
+                id=str(uuid.uuid4()), failure_pattern=analysis.category,
+                error_signature=error[:100], context=task,
+                repair_strategy=analysis.suggested_fix, model_used=self.config.model,
             )
-            result.passed = result.verification.passed
-            result.output = str(result.verification.details or {})
+            self.curator.add_lesson(lesson)
+            iteration_log["lesson_id"] = lesson.id
+        return {"steps": steps_log, "success": False, "error": "Max iterations reached"}
 
-        elif step.type == StepType.READ:
-            try:
-                with open(step.file_path) as f:
-                    result.output = f.read()
-                result.passed = True
-            except Exception as e:
-                result.error = str(e)
+    def execute_task_sync(self, task: str, skill: Optional[Skill] = None, mode: Optional[AgentMode] = None) -> ExecutionTrace:
+        import asyncio
+        return asyncio.run(self.execute_task(task, skill, mode))
 
-        elif step.type == StepType.WRITE:
-            try:
-                with open(step.file_path, "w") as f:
-                    f.write(step.content or "")
-                result.passed = True
-                result.output = f"Wrote to {step.file_path}"
-            except Exception as e:
-                result.error = str(e)
-
-        elif step.type == StepType.BRANCH:
-            # Evaluate condition
-            condition = self._evaluate_condition(step.condition, context, prior_outputs)
-            result.passed = True
-            result.output = f"branch={'true' if condition else 'false'}"
-
-        elif step.type == StepType.VERIFY:
-            if step.verification:
-                result.verification = self.verifier.verify(step.verification, "")
-                result.passed = result.verification.passed
-                result.error = result.verification.message
-            else:
-                result.passed = True
-
-        return result
-
-    def _build_step_prompt(
-        self,
-        step: Step,
-        context: Dict[str, Any],
-        prior_outputs: Dict[str, str],
-    ) -> str:
-        """Build the prompt for a step."""
-        prompt_parts = []
-
-        if step.description:
-            prompt_parts.append(f"Task: {step.description}")
-
-        if prior_outputs:
-            prompt_parts.append("Previous steps:")
-            for step_id, output in prior_outputs.items():
-                prompt_parts.append(f"  [{step_id}]: {output[:200]}...")
-
-        if context:
-            prompt_parts.append("Context:")
-            for key, value in context.items():
-                prompt_parts.append(f"  {key}: {value}")
-
-        prompt_parts.append(f"Current instruction: {step.prompt}")
-
-        return "\n\n".join(prompt_parts)
-
-    def _evaluate_condition(
-        self,
-        condition: Optional[str],
-        context: Dict[str, Any],
-        prior_outputs: Dict[str, str],
-    ) -> bool:
-        """Evaluate a branch condition."""
-        if not condition:
-            return False
-
-        # Simple string-based conditions
-        if "success" in condition.lower():
-            return True
-        return condition in str(context) or condition in str(prior_outputs)
-
-    def _default_exec_rule(self, step: Step):
-        """Create default verification rule for exec steps."""
-        from ratchet.skill import VerificationRule, VerificationType
-
-        return VerificationRule(
-            type=VerificationType.EXIT_CODE,
-            expected_code=0,
-        )
-
-    def _attempt_fix(
-        self,
-        skill: Skill,
-        failed_step: Step,
-        step_result: StepResult,
-        context: Dict[str, Any],
-    ) -> bool:
-        """Attempt to fix a failed step using reflection."""
-        # Record the failure
-        failure = self.reflector.record_failure(
-            skill=skill,
-            step_id=failed_step.id,
-            error=Exception(step_result.error or "Unknown error"),
-            context=context,
-        )
-
-        # Get reflection
-        reflection = self.reflector.reflect(failure)
-
-        if self.config.verbose:
-            print(f"[Agent] Reflection: {reflection.root_cause}")
-            print(f"[Agent] Suggestion: {reflection.suggested_fix}")
-
-        # Generate improved prompt
-        fix_prompt = f"""
-The following step failed:
-Step ID: {failed_step.id}
-Error: {step_result.error}
-Root cause: {reflection.root_cause}
-
-Original prompt:
-{failed_step.prompt}
-
-Please generate an improved version of this step that addresses the failure.
-Focus on: {reflection.suggested_fix}
-"""
-
-        resp = self.generator.generate(fix_prompt)
-        if resp.error:
-            return False
-
-        # Try to update the step prompt
-        new_prompt = self.generator.extract_code(resp.content) or resp.content
-        if new_prompt and len(new_prompt) > len(failed_step.prompt or ""):
-            # Only update if we got something more substantial
-            failed_step.prompt = new_prompt
-            return True
-
-        return False
+    def get_stats(self) -> Dict[str, Any]:
+        total = len(self.execution_history)
+        successes = sum(1 for t in self.execution_history if t.success)
+        return {
+            "total_executions": total,
+            "successes": successes,
+            "success_rate": successes / total if total > 0 else 0,
+            "total_cost": sum(t.total_cost for t in self.execution_history),
+        }

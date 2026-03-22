@@ -1,170 +1,88 @@
 """
-Curator - Knowledge base and skill management
+Curator - Knowledge base for storing and retrieving repair lessons
 """
 
-import os
 import json
-import hashlib
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass, field
+import os
+import uuid
+from typing import List, Optional, Dict, Any
 from datetime import datetime
-from pathlib import Path
-
-from ratchet.skill import Skill, Step
+from dataclasses import dataclass, field, asdict
 
 
 @dataclass
-class KnowledgeEntry:
+class RepairLesson:
     id: str
-    skill_name: str
-    content: str
-    created_at: str
-    tags: List[str] = field(default_factory=list)
-    success_rate: float = 0.0
-    usage_count: int = 0
-    verified: bool = False
+    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    failure_pattern: str = ""
+    error_signature: str = ""
+    context: str = ""
+    repair_strategy: str = ""
+    fix_code: Optional[str] = None
+    prompt_adjustment: Optional[str] = None
+    model_used: str = ""
+    attempts: int = 1
+    success_rate: float = 1.0
+    times_applied: int = 0
+    times_succeeded: int = 0
+    times_failed: int = 0
+
+    def to_dict(self) -> dict:
+        return asdict(self)
 
 
 class Curator:
-    """Knowledge base for learned patterns and successful solutions."""
-
-    def __init__(self, data_dir: str = "./data"):
-        self.data_dir = data_dir
-        self.entries: Dict[str, KnowledgeEntry] = {}
-        self.skills: Dict[str, Skill] = {}
-        self._ensure_data_dir()
+    """Knowledge base for storing and retrieving repair lessons."""
+    def __init__(self, storage_path: str = "./data/curator.json"):
+        self.storage_path = storage_path
+        self.lessons: List[RepairLesson] = []
+        os.makedirs(os.path.dirname(storage_path) or "./data", exist_ok=True)
         self._load()
 
-    def _ensure_data_dir(self):
-        """Ensure data directory exists."""
-        Path(self.data_dir).mkdir(parents=True, exist_ok=True)
-        Path(self.data_dir, "knowledge").mkdir(parents=True, exist_ok=True)
-
     def _load(self):
-        """Load knowledge base from disk."""
-        kb_path = Path(self.data_dir) / "knowledge" / "base.json"
-        if kb_path.exists():
-            with open(kb_path) as f:
-                data = json.load(f)
-                self.entries = {e["id"]: KnowledgeEntry(**e) for e in data}
-
-        skills_path = Path(self.data_dir) / "skills.json"
-        if skills_path.exists():
-            with open(skills_path) as f:
-                data = json.load(f)
-                for name, skill_data in data.items():
-                    self.skills[name] = Skill(**skill_data)
+        if os.path.exists(self.storage_path):
+            try:
+                with open(self.storage_path, "r") as f:
+                    data = json.load(f)
+                    self.lessons = [RepairLesson(**d) for d in data]
+            except: self.lessons = []
 
     def _save(self):
-        """Persist knowledge base to disk."""
-        kb_path = Path(self.data_dir) / "knowledge" / "base.json"
-        with open(kb_path, "w") as f:
-            json.dump([vars(e) for e in self.entries.values()], f, indent=2)
+        with open(self.storage_path, "w") as f:
+            json.dump([l.to_dict() for l in self.lessons], f, indent=2)
 
-        skills_path = Path(self.data_dir) / "skills.json"
-        with open(skills_path, "w") as f:
-            json.dump({name: vars(s) for name, s in self.skills.items()}, f, indent=2)
-
-    def _compute_id(self, content: str) -> str:
-        """Generate a content ID."""
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-    def store(
-        self,
-        skill_name: str,
-        content: str,
-        tags: Optional[List[str]] = None,
-    ) -> KnowledgeEntry:
-        """Store a new knowledge entry."""
-        entry = KnowledgeEntry(
-            id=self._compute_id(content),
-            skill_name=skill_name,
-            content=content,
-            created_at=datetime.utcnow().isoformat(),
-            tags=tags or [],
-        )
-        self.entries[entry.id] = entry
+    def add_lesson(self, lesson: RepairLesson):
+        existing = self.find_similar(lesson.failure_pattern, lesson.error_signature)
+        if existing:
+            existing.attempts += 1
+            if lesson.success_rate > 0.5: existing.success_rate = (existing.success_rate * (existing.attempts-1) + lesson.success_rate) / existing.attempts
+        else:
+            self.lessons.append(lesson)
         self._save()
-        return entry
 
-    def retrieve(
-        self,
-        query: str,
-        top_k: int = 5,
-        tags: Optional[List[str]] = None,
-    ) -> List[KnowledgeEntry]:
-        """Retrieve relevant knowledge entries."""
-        results = []
+    def find_similar(self, failure_pattern: str, error_signature: str, limit: int = 5) -> Optional[RepairLesson]:
+        matches = []
+        for l in self.lessons:
+            if failure_pattern.lower() in l.failure_pattern.lower() or l.failure_pattern.lower() in failure_pattern.lower():
+                matches.append((l, l.success_rate))
+        matches.sort(key=lambda x: x[1], reverse=True)
+        return matches[0][0] if matches else None
 
-        for entry in self.entries.values():
-            if tags and not any(t in entry.tags for t in tags):
-                continue
+    def record_application(self, lesson_id: str, succeeded: bool):
+        for l in self.lessons:
+            if l.id == lesson_id:
+                l.times_applied += 1
+                if succeeded: l.times_succeeded += 1
+                else: l.times_failed += 1
+                l.success_rate = l.times_succeeded / l.times_applied if l.times_applied > 0 else 0
+                self._save()
+                return
 
-            # Simple keyword matching score
-            query_words = set(query.lower().split())
-            content_words = set(entry.content.lower().split())
-            overlap = len(query_words & content_words)
-
-            if overlap > 0:
-                results.append((overlap, entry))
-
-        results.sort(key=lambda x: x[0], reverse=True)
-        return [entry for _, entry in results[:top_k]]
-
-    def register_skill(self, skill: Skill) -> Skill:
-        """Register a skill for tracking and improvement."""
-        self.skills[skill.name] = skill
-        self._save()
-        return skill
-
-    def get_skill(self, name: str) -> Optional[Skill]:
-        """Get a registered skill by name."""
-        return self.skills.get(name)
-
-    def list_skills(self) -> List[Skill]:
-        """List all registered skills."""
-        return list(self.skills.values())
-
-    def update_skill_stats(
-        self,
-        skill_name: str,
-        success: bool,
-        cost: float,
-    ):
-        """Update skill statistics after execution."""
-        skill = self.skills.get(skill_name)
-        if skill:
-            if success:
-                skill.record_success(cost)
-            else:
-                skill.record_failure(cost)
-            self._save()
-
-    def get_best_skill(self, trigger: str) -> Optional[Skill]:
-        """Get the best-performing skill for a trigger pattern."""
-        candidates = [
-            s for s in self.skills.values()
-            if s.trigger_pattern and trigger in s.trigger_pattern
-        ]
-        if not candidates:
-            return None
-
-        return max(candidates, key=lambda s: s.success_rate)
-
-    def export_knowledge(
-        self,
-        output_path: str,
-        format: str = "json",
-    ):
-        """Export knowledge base."""
-        if format == "json":
-            with open(output_path, "w") as f:
-                json.dump([vars(e) for e in self.entries.values()], f, indent=2)
-        elif format == "markdown":
-            with open(output_path, "w") as f:
-                for entry in self.entries.values():
-                    f.write(f"## {entry.id}\n")
-                    f.write(f"**Skill:** {entry.skill_name}\n")
-                    f.write(f"**Tags:** {', '.join(entry.tags)}\n")
-                    f.write(f"**Created:** {entry.created_at}\n\n")
-                    f.write(f"```\n{entry.content}\n```\n\n")
+    def get_stats(self) -> Dict[str, Any]:
+        total = len(self.lessons)
+        if total == 0: return {"total_lessons": 0}
+        return {
+            "total_lessons": total,
+            "total_applications": sum(l.times_applied for l in self.lessons),
+            "average_success_rate": sum(l.success_rate for l in self.lessons) / total,
+        }

@@ -1,94 +1,60 @@
 """
-Code Repair Example - Demonstrates Ratchet fixing broken code
+Example: Code Repair Loop with Self-Improvement
+Run: python examples/code_repair.py
 """
 
-from ratchet import Agent, Generator, Verifier, Curator, Skill, Step, StepType, VerificationRule, VerificationType
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from ratchet.agent import RatchetAgent, AgentConfig, AgentMode
+from ratchet.skill import Skill, Step, StepType
 
 
 def main():
     print("=" * 60)
-    print("Ratchet Code Repair Example")
+    print("RATCHET - Code Repair Example")
     print("=" * 60)
 
-    # Initialize components
-    agent = Agent(
-        generator=Generator(provider="minimax"),
-        verifier=Verifier(),
-        curator=Curator(),
+    api_key = os.environ.get("MINIMAX_API_KEY")
+    if not api_key:
+        print("ERROR: Set MINIMAX_API_KEY environment variable")
+        sys.exit(1)
+
+    config = AgentConfig(
+        provider="minimax",
+        model="MiniMax-M2.7",
+        mode=AgentMode.SELF_IMPROVE,
+        max_iterations=3,
     )
+    agent = RatchetAgent(config)
 
-    # Define a code repair skill
-    repair_skill = Skill(
+    skill = Skill(
         name="code_repair",
-        description="Repair broken Python code using error analysis",
-        trigger_pattern="fix.*bug|repair.*code",
-        trigger_type="pattern",
+        description="Fix broken Python code",
         steps=[
-            Step(
-                id="analyze",
-                type=StepType.PROMPT,
-                description="Analyze the broken code and identify the bug",
-                prompt="""Analyze this Python code and identify the bug.
-                    
-Broken code:
-```python
-def calculate_average(numbers):
-    total = sum(numbers)
-    return total / len(numbers)
-
-result = calculate_average([1, 2, 3, "four", 5])
-print(f"Average: {result}")
-```
-
-Identify:
-1. What is the bug?
-2. What error does it cause?
-3. How to fix it?""",
-            ),
-            Step(
-                id="fix",
-                type=StepType.PROMPT,
-                description="Generate the fixed code",
-                prompt="""Based on the analysis, generate the corrected Python code.
-Only output the fixed code in a ```python``` block.""",
-                verification=VerificationRule(
-                    type=VerificationType.OUTPUT,
-                    must_contain=["def calculate_average"],
-                    must_not_contain=["traceback", "TypeError"],
-                ),
-            ),
-            Step(
-                id="verify",
-                type=StepType.EXEC,
-                description="Run the fixed code to verify it works",
-                command="python3 -c \"\ndef calculate_average(numbers):\n    total = sum(numbers)\n    return total / len(numbers)\n\nresult = calculate_average([1, 2, 3, 4, 5])\nprint(f'Average: {result}')\n\"",
-                verification=VerificationRule(
-                    type=VerificationType.EXIT_CODE,
-                    expected_code=0,
-                    description="Code should execute without errors",
-                ),
-            ),
+            Step(id="generate", type=StepType.PROMPT, prompt="Write a Python function that implements fizzbuzz: returns 'FizzBuzz' for multiples of 15, 'Fizz' for 3, 'Buzz' for 5. Return only code."),
         ],
         self_improve=True,
-        learn_from_failures=True,
     )
 
-    # Run the skill
-    print("\nRunning code repair skill...\n")
-    result = agent.run(
-        repair_skill,
-        context={"task": "fix type error in calculate_average"},
-    )
+    task = "implement fizzbuzz correctly"
+    print(f"\n🔧 Task: {task}")
+    print("\n🚀 Running self-improving code repair...")
 
-    # Report results
-    print(f"\n{'SUCCESS' if result.passed else 'FAILED'}")
-    print(f"Total cost: ${result.total_cost:.4f}")
-    print(f"Total time: {result.total_time_ms:.0f}ms")
-    print(f"Steps executed: {len(result.steps)}")
+    trace = agent.execute_task_sync(task, skill=skill)
 
-    for step in result.steps:
-        status = "PASS" if step.passed else "FAIL"
-        print(f"  [{status}] {step.step_id}: {step.error or 'OK'}")
+    print(f"\n📊 Results:")
+    print(f"   Success: {trace.success}")
+    print(f"   Duration: {trace.duration_ms:.0f}ms")
+    print(f"   Cost: ${trace.total_cost:.4f}")
+
+    if trace.output:
+        print(f"\n📝 Output:\n{trace.output[:500]}")
+
+    stats = agent.get_stats()
+    print(f"\n📈 Stats: {stats}")
+    print("\n" + "=" * 60)
 
 
 if __name__ == "__main__":

@@ -1,106 +1,87 @@
 """
-Benchmark Example - Measure Ratchet agent performance
+Example: Benchmark - Compare models and infrastructure
+Run: python examples/benchmark.py
 """
 
-import time
-from ratchet import Agent, Generator, Verifier, Curator, Skill, Step, StepType, VerificationRule, VerificationType
+import os
+import sys
+import json
+from dataclasses import dataclass
+from typing import List
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from ratchet.agent import RatchetAgent, AgentConfig, AgentMode
 
 
-def benchmark_single_step():
-    """Benchmark a single step execution."""
-    generator = Generator(provider="minimax")
-    verifier = Verifier()
-
-    prompt = "Write a Python function to reverse a string."
-
-    start = time.time()
-    result = generator.generate(prompt)
-    elapsed = (time.time() - start) * 1000
-
-    print(f"  Latency: {result.latency_ms:.0f}ms")
-    print(f"  Cost: ${result.cost:.6f}")
-    print(f"  Model: {result.model}")
-    print(f"  Response length: {len(result.content)} chars")
-    print(f"  Wall time: {elapsed:.0f}ms")
+@dataclass
+class BenchmarkResult:
+    model: str
+    infrastructure: str
+    task: str
+    success: bool
+    duration_ms: float
+    cost: float
 
 
-def benchmark_verification():
-    """Benchmark verification step."""
-    verifier = Verifier()
-
-    rule = VerificationRule(
-        type=VerificationType.OUTPUT,
-        must_contain=["def", "return"],
-        must_not_contain=["error", "fail"],
+def run_benchmark(provider: str, model: str, infrastructure: str, tasks: List[str]) -> List[BenchmarkResult]:
+    config = AgentConfig(
+        provider=provider,
+        model=model,
+        mode=AgentMode.SELF_IMPROVE if infrastructure == "skill" else AgentMode.BASIC,
+        max_iterations=2,
     )
-
-    code_output = """
-def reverse_string(s):
-    return s[::-1]
-"""
-
-    start = time.time()
-    result = verifier.verify(rule, code_output)
-    elapsed = (time.time() - start) * 1000
-
-    print(f"  Verification: {'PASS' if result.passed else 'FAIL'}")
-    print(f"  Time: {elapsed:.1f}ms")
-
-
-def benchmark_full_skill():
-    """Benchmark a full skill execution."""
-    agent = Agent(
-        generator=Generator(provider="minimax"),
-        verifier=Verifier(),
-        curator=Curator(),
-    )
-
-    echo_skill = Skill(
-        name="echo_test",
-        description="Simple echo test",
-        steps=[
-            Step(
-                id="echo",
-                type=StepType.PROMPT,
-                prompt="Return the word 'benchmark' exactly.",
-                verification=VerificationRule(
-                    type=VerificationType.OUTPUT,
-                    must_contain=["benchmark"],
-                ),
-            ),
-        ],
-    )
-
-    start = time.time()
-    result = agent.run(echo_skill)
-    elapsed = (time.time() - start) * 1000
-
-    print(f"  Result: {'PASS' if result.passed else 'FAIL'}")
-    print(f"  Total cost: ${result.total_cost:.6f}")
-    print(f"  Total time: {result.total_time_ms:.0f}ms")
-    print(f"  Wall time: {elapsed:.0f}ms")
+    agent = RatchetAgent(config)
+    results = []
+    for task in tasks:
+        trace = agent.execute_task_sync(task)
+        results.append(BenchmarkResult(
+            model=model, infrastructure=infrastructure, task=task,
+            success=trace.success, duration_ms=trace.duration_ms, cost=trace.total_cost,
+        ))
+    return results
 
 
 def main():
     print("=" * 60)
-    print("Ratchet Benchmark Suite")
+    print("RATCHET - Benchmark")
     print("=" * 60)
 
-    print("\n[1] Single Step Generation Benchmark")
-    print("-" * 40)
-    benchmark_single_step()
+    has_minimax = bool(os.environ.get("MINIMAX_API_KEY"))
+    if not has_minimax:
+        print("WARNING: MINIMAX_API_KEY not set")
 
-    print("\n[2] Verification Benchmark")
-    print("-" * 40)
-    benchmark_verification()
+    tasks = [
+        "Write a palindrome checker function",
+        "Implement binary search",
+        "Merge two sorted arrays",
+    ]
 
-    print("\n[3] Full Skill Execution Benchmark")
-    print("-" * 40)
-    benchmark_full_skill()
+    configs = [("minimax", "MiniMax-M2.7", "basic"), ("minimax", "MiniMax-M2.7", "skill")]
+    all_results = []
+
+    for provider, model, infra in configs:
+        print(f"⏳ Testing: {model} + {infra}...")
+        results = run_benchmark(provider, model, infra, tasks)
+        all_results.extend(results)
 
     print("\n" + "=" * 60)
-    print("Benchmark complete.")
+    print("RESULTS")
     print("=" * 60)
+
+    from collections import defaultdict
+    by_config = defaultdict(list)
+    for r in all_results:
+        by_config[f"{r.model} + {r.infrastructure}"].append(r)
+
+    for config, results in sorted(by_config.items()):
+        rate = sum(1 for r in results if r.success) / len(results) * 100
+        avg_cost = sum(r.cost for r in results) / len(results)
+        print(f"{config}: {rate:.0f}% success, ${avg_cost:.4f} avg cost")
+
+    with open("benchmark_results.json", "w") as f:
+        json.dump([r.__dict__ for r in all_results], f, indent=2)
+    print("\n📁 Results saved to benchmark_results.json")
 
 
 if __name__ == "__main__":
