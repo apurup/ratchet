@@ -58,7 +58,8 @@ class MiniMaxClient(ModelClient):
         # Extract content from MiniMax response format
         choices = data.get("choices", [])
         if choices and len(choices) > 0:
-            content = choices[0].get("messages", [{}])[0].get("text", "")
+            message = choices[0].get("message", {})
+            content = message.get("content", "") or message.get("text", "") or ""
         else:
             content = ""
 
