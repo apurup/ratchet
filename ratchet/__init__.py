@@ -41,8 +41,8 @@ from ratchet.skill import Skill, Step, StepType, VerificationRule, VerificationT
 from ratchet.generator import Generator, GenerationResult
 from ratchet.verifier import Verifier, ExecutionResult
 from ratchet.reflector import Reflector, FailureAnalysis
-from ratchet.curator import Curator, KnowledgeEntry
-from ratchet.agent import Agent, AgentConfig, StepResult, ExecutionResult
+from ratchet.curator import Curator, RepairLesson
+from ratchet.agent import RatchetAgent, AgentConfig, AgentMode, ExecutionTrace
 
 __all__ = [
     # Version
@@ -68,10 +68,10 @@ __all__ = [
     "FailureAnalysis",
     # Curator
     "Curator",
-    "KnowledgeEntry",
+    "RepairLesson",
     # Agent
-    "Agent",
+    "RatchetAgent",
     "AgentConfig",
-    "StepResult",
-    "ExecutionResult",
+    "AgentMode",
+    "ExecutionTrace",
 ]

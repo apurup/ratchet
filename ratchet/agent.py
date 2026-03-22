@@ -69,9 +69,8 @@ class RatchetAgent:
             base_url=self.config.api_base,
         )
         self.generator = Generator(
-            model_client=self.model_client,
-            model_name=self.config.model,
-            default_temperature=self.config.temperature,
+            client=self.model_client,
+            model=self.config.model,
         )
         self.verifier = Verifier(sandbox_dir=self.config.sandbox_dir)
         self.reflector = Reflector(model=self.generator)

@@ -34,6 +34,7 @@ class Generator:
         self.model = model
         self.max_tokens = max_tokens
         self.provider = provider
+        self.total_cost: float = 0.0
 
     def generate(
         self,
@@ -56,6 +57,7 @@ class Generator:
             )
 
             latency_ms = (time.time() - start) * 1000
+            self.total_cost += response.cost
 
             return GenerationResult(
                 content=response.content,
