@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "task": "Write a function that returns the factorial of n. ",
+      "success": true,
+      "iterations": 1,
+      "duration": 71.1,
+      "error": null
+    },
+    {
+      "task": "Write a function that checks if a year is a leap y",
+      "success": true,
+      "iterations": 1,
+      "duration": 31.5,
+      "error": null
+    },
+    {
+      "task": "Write a function that reverses a string without us",
+      "success": true,
+      "iterations": 1,
+      "duration": 84.8,
+      "error": null
+    }
+  ],
+  "curator_count": 0,
+  "curator_lessons": []
+}

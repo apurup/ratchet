@@ -239,6 +239,8 @@ def get_client(provider: str = "minimax", **kwargs) -> ModelClient:
     - "lmstudio" / "local" / "lm" - LM Studio (local models)
     - "openai" - Generic OpenAI-compatible API
     """
+    # Filter out None values so clients can use their defaults
+    kwargs = {k: v for k, v in kwargs.items() if v is not None}
     provider = provider.lower()
     
     if provider in ("lmstudio", "local", "lm"):

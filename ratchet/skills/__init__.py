@@ -1,0 +1,3 @@
+"""
+Skills module for Ratchet
+"""

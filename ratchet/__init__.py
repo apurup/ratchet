@@ -9,8 +9,9 @@ from ratchet.verifier import Verifier, ExecutionResult, TestCase, VerificationSt
 from ratchet.reflector import Reflector, FailureAnalysis
 from ratchet.curator import Curator, RepairLesson
 from ratchet.agent import RatchetAgent, AgentConfig, AgentMode, ExecutionTrace
+from ratchet.mcp_client import MCPClient, PlaywrightMCPClient, get_mcp_client
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "ModelClient",
     "ModelResponse",
@@ -33,6 +34,9 @@ __all__ = [
     "AgentConfig",
     "AgentMode",
     "ExecutionTrace",
+    "MCPClient",
+    "PlaywrightMCPClient",
+    "get_mcp_client",
 ]
 
 # Core exports
