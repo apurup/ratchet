@@ -1,5 +1,5 @@
 """
-Model abstraction layer - supports MiniMax (Anthropic-format), Qwen, OpenAI, etc.
+Model abstraction layer - supports MiniMax, Qwen, LM Studio (local), OpenAI-compatible APIs.
 """
 
 import os
@@ -58,9 +58,6 @@ class MiniMaxClient(ModelClient):
             "max_tokens": kwargs.get("max_tokens", 8192),
         }
         
-        # Optional: enable thinking if model supports it
-        # MiniMax M2.7 has reasoning enabled by default
-        
         with httpx.Client(timeout=120) as client:
             response = client.post(
                 f"{self.base_url}/v1/messages",
@@ -76,7 +73,6 @@ class MiniMaxClient(ModelClient):
         data = response.json()
         
         # Parse content blocks - MiniMax returns an array of content blocks
-        # Each block has type: "thinking" or "text"
         content_blocks = data.get("content", [])
         
         response_text = ""
@@ -88,17 +84,11 @@ class MiniMaxClient(ModelClient):
             elif block.get("type") == "thinking":
                 thinking_text += block.get("thinking", "")
         
-        # Usage and cost calculation
-        # MiniMax pricing (per 1M tokens):
-        #   Input: $0.30 | Output: $1.20
-        #   Cache Read: $0.03 (90% off!) | Cache Write: $0.12
         usage = data.get("usage", {})
         input_tokens = usage.get("input_tokens", 0)
         output_tokens = usage.get("output_tokens", 0)
         
-        # Check for cache hit (MiniMax may include this)
         cache_hit = usage.get("cache_hit", False)
-        
         if cache_hit:
             cost = input_tokens * 0.03 / 1_000_000
         else:
@@ -129,7 +119,7 @@ class QwenClient(ModelClient):
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": kwargs.get("max_tokens", 8192),
         }
-        if kwargs.get("temperature"):
+        if kwargs.get("temperature") is not None:
             payload["temperature"] = kwargs["temperature"]
 
         with httpx.Client(timeout=120) as client:
@@ -151,6 +141,114 @@ class QwenClient(ModelClient):
         )
 
 
+class OpenAICompatibleClient(ModelClient):
+    """
+    Generic OpenAI-compatible API client.
+    
+    Works with:
+    - LM Studio (local models via host.docker.internal)
+    - Ollama
+    - LocalAI
+    - Any OpenAI-compatible API proxy
+    
+    Default base_url: http://host.docker.internal:1234/v1 (LM Studio on Mac)
+    """
+    def __init__(
+        self,
+        api_key: str = "dummy",
+        base_url: str = "http://host.docker.internal:1234/v1",
+        default_model: str = "local-model",
+    ):
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.default_model = default_model
+
+    def complete(self, prompt: str, model: str = None, **kwargs) -> ModelResponse:
+        start = time.time()
+        
+        model = model or self.default_model
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": kwargs.get("max_tokens", 2048),
+        }
+        
+        # Optional parameters
+        if kwargs.get("temperature") is not None:
+            payload["temperature"] = kwargs["temperature"]
+        if kwargs.get("top_p") is not None:
+            payload["top_p"] = kwargs["top_p"]
+        if kwargs.get("stop") is not None:
+            payload["stop"] = kwargs["stop"]
+
+        with httpx.Client(timeout=300) as client:
+            response = client.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+
+        latency_ms = (time.time() - start) * 1000
+
+        if response.status_code != 200:
+            raise Exception(f"OpenAI-compatible API error: {response.status_code} {response.text[:300]}")
+
+        data = response.json()
+        
+        # Parse response
+        choices = data.get("choices", [])
+        if choices and len(choices) > 0:
+            content = choices[0].get("message", {}).get("content", "")
+        else:
+            content = ""
+
+        return ModelResponse(
+            content=content,
+            model=model,
+            usage=data.get("usage", {}),
+            cost=0,  # Free for local models
+            latency_ms=latency_ms,
+            raw=data,
+        )
+
+    def list_models(self) -> list:
+        """List available models from the API"""
+        with httpx.Client(timeout=30) as client:
+            response = client.get(f"{self.base_url}/models", headers={"Authorization": f"Bearer {self.api_key}"})
+        
+        if response.status_code != 200:
+            raise Exception(f"Failed to list models: {response.status_code}")
+        
+        data = response.json()
+        return [m.get("id") for m in data.get("data", [])]
+
+
 def get_client(provider: str = "minimax", **kwargs) -> ModelClient:
-    clients = {"minimax": MiniMaxClient, "qwen": QwenClient}
-    return clients.get(provider.lower(), MiniMaxClient)(**kwargs)
+    """
+    Factory to get a model client by provider name.
+    
+    Providers:
+    - "minimax" / "minimaxi" - MiniMax API (default)
+    - "qwen" / "dashscope" - Qwen API
+    - "lmstudio" / "local" / "lm" - LM Studio (local models)
+    - "openai" - Generic OpenAI-compatible API
+    """
+    provider = provider.lower()
+    
+    if provider in ("lmstudio", "local", "lm"):
+        return OpenAICompatibleClient(**kwargs)
+    elif provider == "openai":
+        return OpenAICompatibleClient(**kwargs)
+    elif provider in ("minimax", "minimaxi"):
+        return MiniMaxClient(**kwargs)
+    elif provider in ("qwen", "dashscope"):
+        return QwenClient(**kwargs)
+    else:
+        # Default to MiniMax
+        return MiniMaxClient(**kwargs)
