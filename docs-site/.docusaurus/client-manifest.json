@@ -1,0 +1,225 @@
+{
+  "entrypoints": [
+    "main"
+  ],
+  "origins": {
+    "42": [
+      42
+    ],
+    "17896441": [
+      869,
+      401
+    ],
+    "main": [
+      354,
+      869,
+      792
+    ],
+    "runtime~main": [
+      792,
+      869,
+      354
+    ],
+    "0a0e45d1": [
+      455
+    ],
+    "0e384e19": [
+      976
+    ],
+    "5281b7a2": [
+      443
+    ],
+    "5e95c892": [
+      647
+    ],
+    "8dc88e6d": [
+      929
+    ],
+    "964ae018": [
+      824
+    ],
+    "a7456010": [
+      235
+    ],
+    "a7bd4aaa": [
+      98
+    ],
+    "a94703ab": [
+      869,
+      48
+    ],
+    "aba21aa0": [
+      742
+    ],
+    "c4f5d8e4": [
+      869,
+      634
+    ],
+    "d589d3a7": [
+      924
+    ],
+    "styles": [
+      48,
+      354,
+      401,
+      634,
+      792,
+      869
+    ]
+  },
+  "assets": {
+    "42": {
+      "js": [
+        {
+          "file": "assets/js/42.deaf3fc3.js",
+          "hash": "c05a0621a0c52daa",
+          "publicPath": "/ratchet/assets/js/42.deaf3fc3.js"
+        }
+      ]
+    },
+    "48": {
+      "js": [
+        {
+          "file": "assets/js/a94703ab.f3e61878.js",
+          "hash": "c1f5fa3c7a1498d0",
+          "publicPath": "/ratchet/assets/js/a94703ab.f3e61878.js"
+        }
+      ]
+    },
+    "98": {
+      "js": [
+        {
+          "file": "assets/js/a7bd4aaa.492ebdc3.js",
+          "hash": "df11a444595641d9",
+          "publicPath": "/ratchet/assets/js/a7bd4aaa.492ebdc3.js"
+        }
+      ]
+    },
+    "235": {
+      "js": [
+        {
+          "file": "assets/js/a7456010.06753d76.js",
+          "hash": "8d143cdda28e9711",
+          "publicPath": "/ratchet/assets/js/a7456010.06753d76.js"
+        }
+      ]
+    },
+    "354": {
+      "js": [
+        {
+          "file": "assets/js/runtime~main.c7a9c0cd.js",
+          "hash": "5cc6489262b463c9",
+          "publicPath": "/ratchet/assets/js/runtime~main.c7a9c0cd.js"
+        }
+      ]
+    },
+    "401": {
+      "js": [
+        {
+          "file": "assets/js/17896441.2427afe5.js",
+          "hash": "5ae4d51919cdc8df",
+          "publicPath": "/ratchet/assets/js/17896441.2427afe5.js"
+        }
+      ]
+    },
+    "443": {
+      "js": [
+        {
+          "file": "assets/js/5281b7a2.b9c9d891.js",
+          "hash": "da165a0742d260b3",
+          "publicPath": "/ratchet/assets/js/5281b7a2.b9c9d891.js"
+        }
+      ]
+    },
+    "455": {
+      "js": [
+        {
+          "file": "assets/js/0a0e45d1.2ad0ceeb.js",
+          "hash": "02e28016de3f7b7e",
+          "publicPath": "/ratchet/assets/js/0a0e45d1.2ad0ceeb.js"
+        }
+      ]
+    },
+    "634": {
+      "js": [
+        {
+          "file": "assets/js/c4f5d8e4.962bad3a.js",
+          "hash": "92489e2fc276d4fd",
+          "publicPath": "/ratchet/assets/js/c4f5d8e4.962bad3a.js"
+        }
+      ]
+    },
+    "647": {
+      "js": [
+        {
+          "file": "assets/js/5e95c892.65ff6876.js",
+          "hash": "19957f94f5798e90",
+          "publicPath": "/ratchet/assets/js/5e95c892.65ff6876.js"
+        }
+      ]
+    },
+    "742": {
+      "js": [
+        {
+          "file": "assets/js/aba21aa0.3d395032.js",
+          "hash": "3cedfdc9a9dca795",
+          "publicPath": "/ratchet/assets/js/aba21aa0.3d395032.js"
+        }
+      ]
+    },
+    "792": {
+      "js": [
+        {
+          "file": "assets/js/main.9bcaa2b2.js",
+          "hash": "b1c295ab645bc05d",
+          "publicPath": "/ratchet/assets/js/main.9bcaa2b2.js"
+        }
+      ]
+    },
+    "824": {
+      "js": [
+        {
+          "file": "assets/js/964ae018.9c05bd74.js",
+          "hash": "d525e27ea7152d53",
+          "publicPath": "/ratchet/assets/js/964ae018.9c05bd74.js"
+        }
+      ]
+    },
+    "869": {
+      "css": [
+        {
+          "file": "assets/css/styles.b7effe97.css",
+          "hash": "82e8ef1aed2701ac",
+          "publicPath": "/ratchet/assets/css/styles.b7effe97.css"
+        }
+      ]
+    },
+    "924": {
+      "js": [
+        {
+          "file": "assets/js/d589d3a7.5a4d36e4.js",
+          "hash": "084f822028c7053f",
+          "publicPath": "/ratchet/assets/js/d589d3a7.5a4d36e4.js"
+        }
+      ]
+    },
+    "929": {
+      "js": [
+        {
+          "file": "assets/js/8dc88e6d.6e4032ba.js",
+          "hash": "478a4876ebac62d8",
+          "publicPath": "/ratchet/assets/js/8dc88e6d.6e4032ba.js"
+        }
+      ]
+    },
+    "976": {
+      "js": [
+        {
+          "file": "assets/js/0e384e19.048ca109.js",
+          "hash": "5f985137b9395943",
+          "publicPath": "/ratchet/assets/js/0e384e19.048ca109.js"
+        }
+      ]
+    }
+  }
+}

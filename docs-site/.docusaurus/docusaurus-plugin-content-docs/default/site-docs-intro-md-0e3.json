@@ -1,0 +1,23 @@
+{
+  "id": "intro",
+  "title": "Ratchet",
+  "description": "Ratchet is a deterministic self-improving AI agent framework that proves strong infrastructure beats bigger models.",
+  "source": "@site/docs/intro.md",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/ratchet/docs/intro",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/apurup/ratchet/tree/main/docs-site/docs/intro.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "next": {
+    "title": "Getting Started",
+    "permalink": "/ratchet/docs/getting-started"
+  }
+}

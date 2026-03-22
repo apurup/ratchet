@@ -1,0 +1,23 @@
+{
+  "id": "api-reference",
+  "title": "API Reference",
+  "description": "Agent",
+  "source": "@site/docs/api-reference.md",
+  "sourceDirName": ".",
+  "slug": "/api-reference",
+  "permalink": "/ratchet/docs/api-reference",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/apurup/ratchet/tree/main/docs-site/docs/api-reference.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Skills",
+    "permalink": "/ratchet/docs/skills"
+  }
+}

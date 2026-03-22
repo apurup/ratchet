@@ -1,0 +1,27 @@
+{
+  "id": "architecture",
+  "title": "Architecture",
+  "description": "Overview",
+  "source": "@site/docs/architecture.md",
+  "sourceDirName": ".",
+  "slug": "/architecture",
+  "permalink": "/ratchet/docs/architecture",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/apurup/ratchet/tree/main/docs-site/docs/architecture.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Getting Started",
+    "permalink": "/ratchet/docs/getting-started"
+  },
+  "next": {
+    "title": "Skills",
+    "permalink": "/ratchet/docs/skills"
+  }
+}

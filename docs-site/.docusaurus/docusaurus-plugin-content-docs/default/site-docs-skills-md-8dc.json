@@ -1,0 +1,27 @@
+{
+  "id": "skills",
+  "title": "Skills",
+  "description": "Skills are deterministic workflows that define how tasks are executed.",
+  "source": "@site/docs/skills.md",
+  "sourceDirName": ".",
+  "slug": "/skills",
+  "permalink": "/ratchet/docs/skills",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/apurup/ratchet/tree/main/docs-site/docs/skills.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "sidebar_position": 4
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Architecture",
+    "permalink": "/ratchet/docs/architecture"
+  },
+  "next": {
+    "title": "API Reference",
+    "permalink": "/ratchet/docs/api-reference"
+  }
+}

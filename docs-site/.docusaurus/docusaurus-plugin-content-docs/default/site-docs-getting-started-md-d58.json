@@ -1,0 +1,27 @@
+{
+  "id": "getting-started",
+  "title": "Getting Started",
+  "description": "Installation",
+  "source": "@site/docs/getting-started.md",
+  "sourceDirName": ".",
+  "slug": "/getting-started",
+  "permalink": "/ratchet/docs/getting-started",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/apurup/ratchet/tree/main/docs-site/docs/getting-started.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Introduction",
+    "permalink": "/ratchet/docs/intro"
+  },
+  "next": {
+    "title": "Architecture",
+    "permalink": "/ratchet/docs/architecture"
+  }
+}
