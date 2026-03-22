@@ -27,7 +27,8 @@ class ModelClient:
 
 
 class MiniMaxClient(ModelClient):
-    def __init__(self, api_key: str = None, base_url: str = "https://api.minimax.io/anthropic"):
+    """MiniMax API client - uses MiniMax Chat Completions API"""
+    def __init__(self, api_key: str = None, base_url: str = "https://api.minimax.io/v1"):
         self.api_key = api_key or os.environ.get("MINIMAX_API_KEY")
         self.base_url = base_url
 
@@ -41,22 +42,36 @@ class MiniMaxClient(ModelClient):
         }
 
         with httpx.Client(timeout=120) as client:
-            response = client.post(f"{self.base_url}/messages", headers=headers, json=payload)
+            response = client.post(
+                f"{self.base_url}/text/chatcompletion_v2",
+                headers=headers,
+                json=payload,
+            )
 
         latency_ms = (time.time() - start) * 1000
 
         if response.status_code != 200:
-            raise Exception(f"MiniMax API error: {response.status_code} {response.text}")
+            raise Exception(f"MiniMax API error: {response.status_code} {response.text[:200]}")
 
         data = response.json()
-        input_tokens = data.get("usage", {}).get("input_tokens", 0)
-        output_tokens = data.get("usage", {}).get("output_tokens", 0)
+
+        # Extract content from MiniMax response format
+        choices = data.get("choices", [])
+        if choices and len(choices) > 0:
+            content = choices[0].get("messages", [{}])[0].get("text", "")
+        else:
+            content = ""
+
+        # Usage: MiniMax charges per 1M tokens
+        usage = data.get("usage", {})
+        input_tokens = usage.get("prompt_tokens", 0)
+        output_tokens = usage.get("completion_tokens", 0)
         cost = (input_tokens * 0.3 + output_tokens * 1.2) / 1_000_000
 
         return ModelResponse(
-            content=data["content"][0]["text"],
+            content=content,
             model=model,
-            usage=data.get("usage", {}),
+            usage=usage,
             cost=cost,
             latency_ms=latency_ms,
             raw=data,
@@ -83,7 +98,7 @@ class QwenClient(ModelClient):
         latency_ms = (time.time() - start) * 1000
 
         if response.status_code != 200:
-            raise Exception(f"Qwen API error: {response.status_code} {response.text}")
+            raise Exception(f"Qwen API error: {response.status_code} {response.text[:200]}")
 
         data = response.json()
         return ModelResponse(
