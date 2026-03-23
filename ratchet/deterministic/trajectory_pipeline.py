@@ -1,5 +1,5 @@
 """
-Batch Trajectory Generation Pipeline for Hermes-Ratchet.
+Batch Trajectory Generation Pipeline for Ratchet.
 
 Generates training trajectories using the deterministic agent loop,
 compresses them, and outputs them for RL training.

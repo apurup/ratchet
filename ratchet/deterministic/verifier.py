@@ -1,5 +1,5 @@
 """
-Hermes-compatible Verifier — sandboxes code execution using Hermes's code_execution_tool.
+Ratchet-compatible Verifier — sandboxes code execution using Ratchet's code_execution_tool.
 """
 
 import json
@@ -53,14 +53,14 @@ class ExecutionResult:
         }
 
 
-class HermesVerifier:
+class RatchetVerifier:
     """
-    Sandboxed code execution using Hermes's code_execution_tool infrastructure.
+    Sandboxed code execution using Ratchet's code_execution_tool infrastructure.
 
     - execute(): Run code and return the raw output + exit code
     - verify_code(): Run code with a test harness and return PASS/FAIL per test
 
-    Uses the same sandbox as Hermes's execute_code tool (UDS RPC, restricted tools,
+    Uses the same sandbox as Ratchet's execute_code tool (UDS RPC, restricted tools,
     no credential access, timeout + output caps).
     """
 
@@ -75,7 +75,7 @@ class HermesVerifier:
         timeout: int = 30,
     ) -> ExecutionResult:
         """
-        Execute code in Hermes's sandbox and return the raw result.
+        Execute code in Ratchet's sandbox and return the raw result.
         """
         from tools.code_execution_tool import execute_code
 

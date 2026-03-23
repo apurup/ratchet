@@ -1,12 +1,12 @@
 """
-Hermes-compatible Reflector — failure analysis + improvement hypotheses.
+Ratchet-compatible Reflector — failure analysis + improvement hypotheses.
 """
 
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ratchet.deterministic.generator import HermesGenerator
+    from ratchet.deterministic.generator import RatchetGenerator
 
 
 class FailureCategory:
@@ -60,7 +60,7 @@ class FailureAnalysis:
 
 
 
-class HermesReflector:
+class RatchetReflector:
     """
     Analyzes execution failures and generates improvement hypotheses.
 
@@ -68,7 +68,7 @@ class HermesReflector:
     Optionally uses LLM for deeper analysis when the model is available.
     """
 
-    def __init__(self, generator: Optional["HermesGenerator"] = None):
+    def __init__(self, generator: Optional["RatchetGenerator"] = None):
         self._generator = generator
 
     def analyze_failure(

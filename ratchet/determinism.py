@@ -1,5 +1,5 @@
 """
-Deterministic execution infrastructure for Hermes-Ratchet.
+Deterministic execution infrastructure for Ratchet.
 
 Provides:
 - Seed computation: derive a deterministic seed from (task + skill_name)
@@ -8,7 +8,7 @@ Provides:
 - Integration points for AIAgent
 
 Usage:
-    from hermes_determinism import compute_seed, DeterministicReplay
+    from ratchet.determinism import compute_seed, DeterministicReplay
 
     seed = compute_seed("fix the fizzbuzz function", skill_name="code_repair")
     dr = DeterministicReplay(seed)
@@ -158,7 +158,7 @@ def step_key(tool_name: str, args: Dict[str, Any]) -> str:
     return f"{tool_name}:{args_hash}"
 
 
-class HermesDeterminismMixin:
+class DeterminismMixin:
     """
     Mixin that adds deterministic replay capability to AIAgent.
 
@@ -172,7 +172,7 @@ class HermesDeterminismMixin:
     - self.replay_step(key) -> Optional[str]
 
     Usage:
-        class MyAgent(HermesDeterminismMixin, AIAgent):
+        class MyAgent(DeterminismMixin, AIAgent):
             ...
     """
 
@@ -258,8 +258,8 @@ class HermesDeterminismMixin:
             context: Broader context (task description, skill name, etc.)
         """
         try:
-            from ratchet.deterministic.curator import HermesCurator
-            curator = HermesCurator()
+            from ratchet.deterministic.curator import RatchetCurator
+            curator = RatchetCurator()
             curator.add_lesson(
                 failure_pattern=failure_pattern,
                 error_signature=error_signature,

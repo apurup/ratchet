@@ -11,19 +11,19 @@ from ratchet.curator import Curator, RepairLesson
 from ratchet.agent import RatchetAgent, AgentConfig, AgentMode, ExecutionTrace
 from ratchet.mcp_client import MCPClient, get_mcp_client
 
-# Hermes deterministic exports
-from ratchet.hermes_determinism import (
+# Deterministic exports
+from ratchet.determinism import (
     compute_seed,
     DeterministicReplay,
     DeterministicState,
     StepTrace,
-    HermesDeterminismMixin,
+    DeterminismMixin,
 )
 from ratchet.deterministic import (
-    HermesGenerator,
-    HermesVerifier,
-    HermesReflector,
-    HermesCurator,
+    RatchetGenerator,
+    RatchetVerifier,
+    RatchetReflector,
+    RatchetCurator,
     SubagentManager,
     SubagentResult,
     compute_subagent_seed,
@@ -78,16 +78,16 @@ __all__ = [
     # MCP
     "MCPClient",
     "get_mcp_client",
-    # Deterministic / Hermes
+    # Deterministic
     "compute_seed",
     "DeterministicReplay",
     "DeterministicState",
     "StepTrace",
-    "HermesDeterminismMixin",
-    "HermesGenerator",
-    "HermesVerifier",
-    "HermesReflector",
-    "HermesCurator",
+    "DeterminismMixin",
+    "RatchetGenerator",
+    "RatchetVerifier",
+    "RatchetReflector",
+    "RatchetCurator",
     "SubagentManager",
     "SubagentResult",
     "compute_subagent_seed",

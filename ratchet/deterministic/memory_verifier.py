@@ -1,5 +1,5 @@
 """
-Verified Memory Writes for Hermes-Ratchet.
+Verified Memory Writes for Ratchet.
 
 When the agent writes to MEMORY.md or USER.md, this module intercepts the write,
 validates it through a temp file, and only commits if verification passes.
@@ -235,7 +235,7 @@ class MemoryVerifier:
                 file_path=temp_path,
             )
 
-        # Optional: Delegate to HermesVerifier if available
+        # Optional: Delegate to RatchetVerifier if available
         if self._verifier_module:
             try:
                 # Try to use the verifier module for additional checks
@@ -345,7 +345,7 @@ class MemoryVerifier:
         content: str,
     ) -> Optional[VerificationResult]:
         """
-        Delegate to HermesVerifier if available for additional checks.
+        Delegate to RatchetVerifier if available for additional checks.
 
         This allows the memory verifier to leverage the same verification
         infrastructure used for code verification.
@@ -353,9 +353,9 @@ class MemoryVerifier:
         if not self._verifier_module:
             return None
 
-        # Try to import and use HermesVerifier.verify_code
+        # Try to import and use RatchetVerifier.verify_code
         try:
-            verifier = self._verifier_module.HermesVerifier()
+            verifier = self._verifier_module.RatchetVerifier()
             # For memory, we treat it as text verification
             # Pass the content as the "code" to verify
             result = await verifier.verify_code(
@@ -364,7 +364,7 @@ class MemoryVerifier:
                 language="markdown",
                 timeout=5,
             )
-            # HermesVerifier returns a VerificationResult-like object
+            # RatchetVerifier returns a VerificationResult-like object
             # Map it to our VerificationResult
             if hasattr(result, 'status'):
                 status_map = {

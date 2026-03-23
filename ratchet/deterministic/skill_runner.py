@@ -5,10 +5,10 @@ Each step is executed with verification before proceeding to the next step.
 Failure at any step triggers Reflector analysis + Curator.learn() + retry.
 """
 
-from ratchet.deterministic.generator import HermesGenerator, GenerationResult
-from ratchet.deterministic.verifier import HermesVerifier, VerificationStatus, TestCase
-from ratchet.deterministic.reflector import HermesReflector, FailureAnalysis
-from ratchet.deterministic.curator import HermesCurator
+from ratchet.deterministic.generator import RatchetGenerator, GenerationResult
+from ratchet.deterministic.verifier import RatchetVerifier, VerificationStatus, TestCase
+from ratchet.deterministic.reflector import RatchetReflector, FailureAnalysis
+from ratchet.deterministic.curator import RatchetCurator
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 from dataclasses import dataclass, field
 
@@ -49,10 +49,10 @@ class SkillRunner:
         kb: Optional["HermesKnowledgeBase"] = None,
     ):
         self.agent = agent
-        self.generator = HermesGenerator(agent)
-        self.verifier = HermesVerifier()
-        self.reflector = HermesReflector(self.generator)
-        self.curator = HermesCurator(kb=kb)
+        self.generator = RatchetGenerator(agent)
+        self.verifier = RatchetVerifier()
+        self.reflector = RatchetReflector(self.generator)
+        self.curator = RatchetCurator(kb=kb)
         self.max_retries = max_retries
 
     async def run_skill(
@@ -702,7 +702,7 @@ class SkillRunner:
         lines = [
             f"# {skill_name}",
             "",
-            f"Auto-generated skill from Hermes-Ratchet skill nudge.",
+            f"Auto-generated skill from Ratchet skill nudge.",
             f"Pattern ID: {pattern_key}",
             "",
             "## When to Use",

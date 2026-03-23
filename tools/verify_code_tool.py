@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Verify Code Tool — Deterministic verification for Hermes-Ratchet.
+Verify Code Tool — Deterministic verification for Ratchet.
 
-Runs Python code in Hermes's sandbox with optional test harness.
+Runs Python code in Ratchet's sandbox with optional test harness.
 Returns PASS/FAIL with detailed output for the Reflector to analyze.
 
 Usage:
@@ -87,13 +87,13 @@ async def _verify_code_async(
     """
     Async implementation of verify_code.
 
-    Delegates to the HermesVerifier for sandboxed execution + test harness.
+    Delegates to the RatchetVerifier for sandboxed execution + test harness.
     """
     try:
         # Import here to avoid circular imports
-        from ratchet.deterministic.verifier import HermesVerifier, TestCase
+        from ratchet.deterministic.verifier import RatchetVerifier, TestCase
 
-        verifier = HermesVerifier()
+        verifier = RatchetVerifier()
 
         normalized_tests = [_normalize_test(t) for t in (tests or [])]
 

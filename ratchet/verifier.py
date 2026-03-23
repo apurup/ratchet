@@ -140,5 +140,5 @@ class Verifier:
         return f"{code}\nconsole.log('tests')"
 
 
-# Hermes compatibility — import and re-export HermesVerifier from deterministic
-from ratchet.deterministic.verifier import HermesVerifier
+# Ratchet compatibility — import and re-export RatchetVerifier from deterministic
+from ratchet.deterministic.verifier import RatchetVerifier

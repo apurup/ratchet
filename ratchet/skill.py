@@ -100,5 +100,5 @@ class Skill(BaseModel):
         return self.success_count / total if total > 0 else 0.0
 
 
-# Hermes compatibility — re-export SkillStep and SkillSchema from deterministic/skill_schema
+# Ratchet compatibility — re-export SkillStep and SkillSchema from deterministic/skill_schema
 from ratchet.deterministic.skill_schema import SkillStep, Skill as SkillSchema

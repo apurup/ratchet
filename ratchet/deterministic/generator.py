@@ -1,5 +1,5 @@
 """
-Hermes-compatible Generator — bridges Hermes's model layer to Ratchet's Generator interface.
+Ratchet-compatible Generator — bridges Ratchet's model layer to Ratchet's Generator interface.
 """
 
 import time
@@ -18,11 +18,11 @@ class GenerationResult:
     error: Optional[str] = None
 
 
-class HermesGenerator:
+class RatchetGenerator:
     """
-    Generator that wraps Hermes's AIAgent model call interface.
+    Generator that wraps Ratchet's AIAgent model call interface.
 
-    Compatible with Ratchet's Generator interface but uses Hermes's
+    Compatible with Ratchet's Generator interface but uses Ratchet's
     model_tools and agent infrastructure for the actual API calls.
     """
 
@@ -40,16 +40,16 @@ class HermesGenerator:
         **kwargs,
     ) -> GenerationResult:
         """
-        Generate a response using Hermes's model client.
+        Generate a response using Ratchet's model client.
 
-        Uses Hermes's _make_api_call if available, otherwise falls back
+        Uses Ratchet's _make_api_call if available, otherwise falls back
         to calling through the agent's provider infrastructure.
         """
         start = time.time()
         model = model or self._agent.model
 
         try:
-            # Use Hermes's internal API call mechanism
+            # Use Ratchet's internal API call mechanism
             response = self._agent._make_api_call(
                 prompt=prompt,
                 system=system,

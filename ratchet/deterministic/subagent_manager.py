@@ -1,5 +1,5 @@
 """
-Verified Subagent Manager for Hermes-Ratchet.
+Verified Subagent Manager for Ratchet.
 
 Spawns isolated subagents with deterministic execution and
 verified result aggregation.

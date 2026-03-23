@@ -88,5 +88,5 @@ class Curator:
         }
 
 
-# Hermes compatibility — import and re-export HermesCurator from deterministic
-from ratchet.deterministic.curator import HermesCurator
+# Ratchet compatibility — import and re-export RatchetCurator from deterministic
+from ratchet.deterministic.curator import RatchetCurator

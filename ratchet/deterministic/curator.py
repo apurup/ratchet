@@ -1,5 +1,5 @@
 """
-Hermes-compatible Curator — repair lesson KB with Hermes knowledge_base integration.
+Ratchet-compatible Curator — repair lesson KB with Ratchet knowledge_base integration.
 """
 
 import json
@@ -24,7 +24,7 @@ class RepairLesson:
     A learned repair lesson from a failed execution.
 
     Matches Ratchet's RepairLesson for compatibility.
-    Stored in curator.json (file-backed, simple) and optionally in Hermes's KB.
+    Stored in curator.json (file-backed, simple) and optionally in Ratchet's KB.
     """
     id: str
     created_at: str
@@ -66,12 +66,12 @@ class RepairLesson:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
-class HermesCurator:
+class RatchetCurator:
     """
-    Knowledge base for repair lessons with Hermes integration.
+    Knowledge base for repair lessons with Ratchet integration.
 
     File-backed (curator.json) for simplicity and portability.
-    Optionally indexes into Hermes's FTS5 KnowledgeBase for cross-session recall.
+    Optionally indexes into Ratchet's FTS5 KnowledgeBase for cross-session recall.
     """
 
     def __init__(
@@ -153,7 +153,7 @@ class HermesCurator:
             self.lessons.append(lesson)
             self._save()
 
-            # Also index in Hermes KB if available
+            # Also index in Ratchet KB if available
             if self._kb and HermesKnowledgeBase:
                 self._index_in_kb(lesson)
 
@@ -251,7 +251,7 @@ class HermesCurator:
                 return
 
     def _index_in_kb(self, lesson: RepairLesson):
-        """Index a lesson in Hermes's FTS5 knowledge base."""
+        """Index a lesson in Ratchet's FTS5 knowledge base."""
         try:
             self._kb.add_repair_lesson(lesson)
         except Exception:

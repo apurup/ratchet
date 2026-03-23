@@ -1,7 +1,7 @@
 """
 Skill Schema — Pydantic models for skill definitions.
 
-Compatible with both Ratchet's Step schema and Hermes's SKILL.md format.
+Compatible with both Ratchet's Step schema and Ratchet's SKILL.md format.
 """
 
 from pydantic import BaseModel, Field

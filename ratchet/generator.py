@@ -121,5 +121,5 @@ class Generator:
         return content.strip()
 
 
-# Hermes compatibility — import and re-export HermesGenerator from deterministic
-from ratchet.deterministic.generator import HermesGenerator
+# Ratchet compatibility — import and re-export RatchetGenerator from deterministic
+from ratchet.deterministic.generator import RatchetGenerator

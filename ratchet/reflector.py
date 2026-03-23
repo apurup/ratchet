@@ -72,5 +72,5 @@ class Reflector:
         return f"Task has failed {most_common[1]}x with {most_common[0]} errors. {past_failures[-1].hypothesis}"
 
 
-# Hermes compatibility — import and re-export HermesReflector from deterministic
-from ratchet.deterministic.reflector import HermesReflector
+# Ratchet compatibility — import and re-export RatchetReflector from deterministic
+from ratchet.deterministic.reflector import RatchetReflector

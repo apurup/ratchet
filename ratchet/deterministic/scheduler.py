@@ -1,5 +1,5 @@
 """
-Natural Language Scheduler for Hermes-Ratchet.
+Natural Language Scheduler for Ratchet.
 
 Parses natural language scheduling expressions and manages cron jobs
 that deliver to any gateway platform.
