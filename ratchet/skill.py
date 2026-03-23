@@ -98,3 +98,7 @@ class Skill(BaseModel):
     def success_rate(self) -> float:
         total = self.success_count + self.failure_count
         return self.success_count / total if total > 0 else 0.0
+
+
+# Hermes compatibility — re-export SkillStep and SkillSchema from deterministic/skill_schema
+from ratchet.deterministic.skill_schema import SkillStep, Skill as SkillSchema

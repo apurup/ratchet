@@ -119,3 +119,7 @@ class Generator:
             end = content.find("```", start)
             return content[start:end].strip()
         return content.strip()
+
+
+# Hermes compatibility — import and re-export HermesGenerator from deterministic
+from ratchet.deterministic.generator import HermesGenerator

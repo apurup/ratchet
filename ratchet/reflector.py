@@ -70,3 +70,7 @@ class Reflector:
             cats[f.category] = cats.get(f.category, 0) + 1
         most_common = max(cats.items(), key=lambda x: x[1])
         return f"Task has failed {most_common[1]}x with {most_common[0]} errors. {past_failures[-1].hypothesis}"
+
+
+# Hermes compatibility — import and re-export HermesReflector from deterministic
+from ratchet.deterministic.reflector import HermesReflector

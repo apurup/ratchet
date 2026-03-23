@@ -4,50 +4,45 @@ Ratchet - Deterministic self-improving AI agent framework
 
 from ratchet.models import ModelClient, ModelResponse, get_client
 from ratchet.skill import Skill, Step, VerificationRule, StepType, VerificationType
-from ratchet.generator import Generator
+from ratchet.generator import Generator, GenerationResult
 from ratchet.verifier import Verifier, ExecutionResult, TestCase, VerificationStatus
 from ratchet.reflector import Reflector, FailureAnalysis
 from ratchet.curator import Curator, RepairLesson
 from ratchet.agent import RatchetAgent, AgentConfig, AgentMode, ExecutionTrace
-from ratchet.mcp_client import MCPClient, PlaywrightMCPClient, get_mcp_client
+from ratchet.mcp_client import MCPClient, get_mcp_client
+
+# Hermes deterministic exports
+from ratchet.hermes_determinism import (
+    compute_seed,
+    DeterministicReplay,
+    DeterministicState,
+    StepTrace,
+    HermesDeterminismMixin,
+)
+from ratchet.deterministic import (
+    HermesGenerator,
+    HermesVerifier,
+    HermesReflector,
+    HermesCurator,
+    SubagentManager,
+    SubagentResult,
+    compute_subagent_seed,
+    RPCMessage,
+    RPCResult,
+    RPCProgress,
+    RPCLesson,
+    RPCInterrupt,
+    RPCChannel,
+    InMemoryChannel,
+    RPCAggregator,
+    TrajectoryPipeline,
+    TrajectoryStep,
+    Trajectory,
+    NaturalLanguageScheduler,
+    ScheduledTask,
+)
 
 __version__ = "0.2.0"
-__all__ = [
-    "ModelClient",
-    "ModelResponse",
-    "get_client",
-    "Skill",
-    "Step",
-    "VerificationRule",
-    "StepType",
-    "VerificationType",
-    "Generator",
-    "Verifier",
-    "ExecutionResult",
-    "TestCase",
-    "VerificationStatus",
-    "Reflector",
-    "FailureAnalysis",
-    "Curator",
-    "RepairLesson",
-    "RatchetAgent",
-    "AgentConfig",
-    "AgentMode",
-    "ExecutionTrace",
-    "MCPClient",
-    "PlaywrightMCPClient",
-    "get_mcp_client",
-]
-
-# Core exports
-from ratchet.models import ModelResponse, ModelClient, get_client
-from ratchet.skill import Skill, Step, StepType, VerificationRule, VerificationType
-from ratchet.generator import Generator, GenerationResult
-from ratchet.verifier import Verifier, ExecutionResult
-from ratchet.reflector import Reflector, FailureAnalysis
-from ratchet.curator import Curator, RepairLesson
-from ratchet.agent import RatchetAgent, AgentConfig, AgentMode, ExecutionTrace
-
 __all__ = [
     # Version
     "__version__",
@@ -67,6 +62,8 @@ __all__ = [
     # Verifier
     "Verifier",
     "ExecutionResult",
+    "TestCase",
+    "VerificationStatus",
     # Reflector
     "Reflector",
     "FailureAnalysis",
@@ -78,4 +75,33 @@ __all__ = [
     "AgentConfig",
     "AgentMode",
     "ExecutionTrace",
+    # MCP
+    "MCPClient",
+    "get_mcp_client",
+    # Deterministic / Hermes
+    "compute_seed",
+    "DeterministicReplay",
+    "DeterministicState",
+    "StepTrace",
+    "HermesDeterminismMixin",
+    "HermesGenerator",
+    "HermesVerifier",
+    "HermesReflector",
+    "HermesCurator",
+    "SubagentManager",
+    "SubagentResult",
+    "compute_subagent_seed",
+    "RPCMessage",
+    "RPCResult",
+    "RPCProgress",
+    "RPCLesson",
+    "RPCInterrupt",
+    "RPCChannel",
+    "InMemoryChannel",
+    "RPCAggregator",
+    "TrajectoryPipeline",
+    "TrajectoryStep",
+    "Trajectory",
+    "NaturalLanguageScheduler",
+    "ScheduledTask",
 ]

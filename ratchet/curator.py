@@ -86,3 +86,7 @@ class Curator:
             "total_applications": sum(l.times_applied for l in self.lessons),
             "average_success_rate": sum(l.success_rate for l in self.lessons) / total,
         }
+
+
+# Hermes compatibility — import and re-export HermesCurator from deterministic
+from ratchet.deterministic.curator import HermesCurator

@@ -138,3 +138,7 @@ class Verifier:
                 test_blocks.append(f"try:\n    r={fn}({inp})\n    ok=r=={exp}\nexcept Exception as e:\n    ok=False\nprint(json.dumps({{'name':{repr(t.name)},'passed':ok,'expected':{exp},'actual':r}}))")
             return f"import json\n{code}\n" + "\n".join(test_blocks)
         return f"{code}\nconsole.log('tests')"
+
+
+# Hermes compatibility — import and re-export HermesVerifier from deterministic
+from ratchet.deterministic.verifier import HermesVerifier
